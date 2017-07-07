@@ -1,6 +1,6 @@
 {
     "name": "boxed-code/laravel-scout-database",
-    "description": "Database driver for laravel scout.",
+    "description": "Generic database driver for laravel scout.",
     "keywords": ["laravel", "scout", "database", "mysql", "sqlite"],
     "license": "MIT",
     "authors": [
