@@ -1,5 +1,5 @@
 {
-    "name": "olsgreen/laravel-scout-database",
+    "name": "boxed-code/laravel-scout-database",
     "description": "Database driver for laravel scout.",
     "keywords": ["laravel", "scout", "database", "mysql", "sqlite"],
     "license": "MIT",
