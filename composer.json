@@ -28,6 +28,13 @@
             "BoxedCode\\Laravel\\Scout\\Test\\": "tests"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "BoxedCode\\Laravel\\Scout\\DatabaseEngineServiceProvider"
+            ]
+        }
+    },
     "minimum-stability": "dev",
     "prefer-stable": true
 }
