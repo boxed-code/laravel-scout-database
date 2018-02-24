@@ -46,7 +46,7 @@ class DatabaseEngine extends Engine
     {
         $models
             ->map(function ($model) {
-                $array = $model->toSearchableArray();
+                $array = array_values($model->toSearchableArray());
 
                 if (empty($array)) {
                     return;
