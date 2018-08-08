@@ -10,8 +10,8 @@
         }
     ],
     "require": {
-        "php": ">=5.6.4",
-        "laravel/scout": "^3.0"
+        "php": ">=7.0",
+        "laravel/scout": "^4.0"
     },
      "require-dev": {
         "fzaninotto/faker": "~1.4",
