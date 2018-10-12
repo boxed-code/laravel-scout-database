@@ -11,14 +11,14 @@ class DatabaseEngine extends Engine
 {
     /**
      * Database connection.
-     * 
+     *
      * @var \Illuminate\Database\DatabaseManager
      */
     protected $database;
 
     /**
      * Spin up a new instance of the engine.
-     * 
+     *
      * @param DatabaseManager $database
      */
     public function __construct(DatabaseManager $database)
@@ -28,7 +28,7 @@ class DatabaseEngine extends Engine
 
     /**
      * Get a base query builder.
-     * 
+     *
      * @return \Illuminate\Database\Query\Builder
      */
     protected function query()
@@ -53,15 +53,15 @@ class DatabaseEngine extends Engine
                 }
 
                 return [
-                    'objectID' => $model->getKey(), 
-                    'index' => $model->searchableAs(), 
+                    'objectID' => $model->getKey(),
+                    'index' => $model->searchableAs(),
                     'entry' => json_encode($array),
                 ];
             })
             ->filter()
             ->each(function($record) {
                 $attributes = [
-                    'index' => $record['index'], 
+                    'index' => $record['index'],
                     'objectID' => $record['objectID']
                 ];
                 $this->query()->updateOrInsert($attributes, $record);
@@ -73,7 +73,7 @@ class DatabaseEngine extends Engine
      *
      * @param  \Illuminate\Database\Eloquent\Collection  $models
      * @return void
-     */    
+     */
     public function delete($models)
     {
         $index = $models->first()->searchableAs();
@@ -120,7 +120,7 @@ class DatabaseEngine extends Engine
                 }
             });
     }
-    
+
     /**
      * Perform the given search on the engine.
      *
@@ -141,7 +141,7 @@ class DatabaseEngine extends Engine
      * @param  int  $perPage
      * @param  int  $page
      * @return mixed
-     */    
+     */
     public function paginate(Builder $builder, $perPage, $page)
     {
         $results = $this->performSearch($builder)
@@ -152,15 +152,16 @@ class DatabaseEngine extends Engine
 
         return ['results' => $results, 'total' => $total];
     }
-    
+
     /**
      * Map the given results to instances of the given model.
      *
+     * @param  \Laravel\Scout\Builder  $builder
      * @param  mixed  $results
      * @param  \Illuminate\Database\Eloquent\Model  $model
      * @return \Illuminate\Database\Eloquent\Collection
      */
-    public function map($results, $model)
+    public function map(Builder $builder, $results, $model)
     {
         if ($results['total'] === 0) {
             return Collection::make();
