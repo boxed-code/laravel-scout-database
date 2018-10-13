@@ -1,6 +1,7 @@
 # Laravel Scout Database Driver
 
 [![Software License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](LICENSE.md)
+[![Build Status](https://travis-ci.com/boxed-code/laravel-scout-database.svg?branch=master)](https://travis-ci.com/boxed-code/laravel-scout-database)
 
 This is a basic database backed driver [for Laravel Scout](https://laravel.com/docs/5.4/scout). It is intended for use during development to avoid the need to setup an elastic instance or agolia and instead uses your active database configuration. 
 

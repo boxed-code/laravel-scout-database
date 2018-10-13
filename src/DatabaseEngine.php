@@ -108,17 +108,18 @@ class DatabaseEngine extends Engine
             );
         }
 
-        return $this->query()
+        $query = $this->query()
             ->select('objectID')
             ->where('index', '=', $index)
-            ->where('entry', 'like', '%'.$builder->query.'%')
-            ->where(function($query) use ($builder) {
-                foreach ($builder->wheres as $column => $value) {
-                    $search = sprintf('%%"%s":"%s"%%', $column, $value);
+            ->where('entry', 'like', '%'.$builder->query.'%');
 
-                    $query->where('entry', 'like', $search);
-                }
-            });
+        foreach ($builder->wheres as $column => $value) {
+            $search = sprintf('%%"%s":"%s"%%', $column, $value);
+
+            $query->where('entry', 'like', $search);
+        }
+
+        return $query;
     }
 
     /**
