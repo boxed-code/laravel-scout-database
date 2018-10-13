@@ -19,7 +19,8 @@ class TestModel extends Model
     }
 
     /**
-     * The default key of Models with Searchable-Trait
+     * The default key of Models with Searchable-Trait.
+     *
      * @return mixed
      */
     public function getScoutKey()

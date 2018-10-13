@@ -27,20 +27,9 @@ class DatabaseEngine extends Engine
     }
 
     /**
-     * Get a base query builder.
-     *
-     * @return \Illuminate\Database\Query\Builder
-     */
-    protected function query()
-    {
-        return $this->database->table('scout_index');
-    }
-
-    /**
      * Update the given model in the index.
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $models
-     * @return void
+     * @param \Illuminate\Database\Eloquent\Collection $models
      */
     public function update($models)
     {
@@ -54,15 +43,15 @@ class DatabaseEngine extends Engine
 
                 return [
                     'objectID' => $model->getKey(),
-                    'index' => $model->searchableAs(),
-                    'entry' => json_encode($array),
+                    'index'    => $model->searchableAs(),
+                    'entry'    => json_encode($array),
                 ];
             })
             ->filter()
-            ->each(function($record) {
+            ->each(function ($record) {
                 $attributes = [
-                    'index' => $record['index'],
-                    'objectID' => $record['objectID']
+                    'index'    => $record['index'],
+                    'objectID' => $record['objectID'],
                 ];
                 $this->query()->updateOrInsert($attributes, $record);
             });
@@ -71,8 +60,7 @@ class DatabaseEngine extends Engine
     /**
      * Remove the given model from the index.
      *
-     * @param  \Illuminate\Database\Eloquent\Collection  $models
-     * @return void
+     * @param \Illuminate\Database\Eloquent\Collection $models
      */
     public function delete($models)
     {
@@ -91,8 +79,109 @@ class DatabaseEngine extends Engine
     /**
      * Perform the given search on the engine.
      *
-     * @param  \Laravel\Scout\Builder  $builder
-     * @param  array  $options
+     * @param \Laravel\Scout\Builder $builder
+     *
+     * @return mixed
+     */
+    public function search(Builder $builder)
+    {
+        $results = $this->performSearch($builder)->get();
+
+        return ['results' => $results, 'total' => count($results)];
+    }
+
+    /**
+     * Perform the given search on the engine.
+     *
+     * @param \Laravel\Scout\Builder $builder
+     * @param int                    $perPage
+     * @param int                    $page
+     *
+     * @return mixed
+     */
+    public function paginate(Builder $builder, $perPage, $page)
+    {
+        $results = $this->performSearch($builder)
+            ->forPage($page, $perPage)
+            ->get();
+
+        $total = $this->performSearch($builder)->count();
+
+        return ['results' => $results, 'total' => $total];
+    }
+
+    /**
+     * Map the given results to instances of the given model.
+     *
+     * @param \Laravel\Scout\Builder              $builder
+     * @param mixed                               $results
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function map(Builder $builder, $results, $model)
+    {
+        if (0 === $results['total']) {
+            return Collection::make();
+        }
+
+        $keys = $this->mapIds($results);
+
+        $models = $model->whereIn(
+            $model->getQualifiedKeyName(),
+            $keys
+        )->get()->keyBy($model->getKeyName());
+
+        return Collection::make($results['results'])
+            ->map(function ($record) use ($model, $models) {
+                $key = $record->objectID;
+
+                if (isset($models[$key])) {
+                    return $models[$key];
+                }
+            })->filter();
+    }
+
+    /**
+     * Get the total count from a raw result returned by the engine.
+     *
+     * @param mixed $results
+     *
+     * @return int
+     */
+    public function getTotalCount($results)
+    {
+        return $results['total'];
+    }
+
+    /**
+     * Pluck and return the primary keys of the given results.
+     *
+     * @param mixed $results
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function mapIds($results)
+    {
+        return $results['results']->pluck('objectID')->values();
+    }
+
+    /**
+     * Get a base query builder.
+     *
+     * @return \Illuminate\Database\Query\Builder
+     */
+    protected function query()
+    {
+        return $this->database->table('scout_index');
+    }
+
+    /**
+     * Perform the given search on the engine.
+     *
+     * @param \Laravel\Scout\Builder $builder
+     * @param array                  $options
+     *
      * @return mixed
      */
     protected function performSearch(Builder $builder, array $options = [])
@@ -111,7 +200,7 @@ class DatabaseEngine extends Engine
         $query = $this->query()
             ->select('objectID')
             ->where('index', '=', $index)
-            ->where('entry', 'like', '%'.$builder->query.'%');
+            ->where('entry', 'like', '%' . $builder->query . '%');
 
         foreach ($builder->wheres as $column => $value) {
             $search = sprintf('%%"%s":"%s"%%', $column, $value);
@@ -120,89 +209,5 @@ class DatabaseEngine extends Engine
         }
 
         return $query;
-    }
-
-    /**
-     * Perform the given search on the engine.
-     *
-     * @param  \Laravel\Scout\Builder  $builder
-     * @return mixed
-     */
-    public function search(Builder $builder)
-    {
-        $results = $this->performSearch($builder)->get();
-
-        return ['results' => $results, 'total' => count($results)];
-    }
-
-    /**
-     * Perform the given search on the engine.
-     *
-     * @param  \Laravel\Scout\Builder  $builder
-     * @param  int  $perPage
-     * @param  int  $page
-     * @return mixed
-     */
-    public function paginate(Builder $builder, $perPage, $page)
-    {
-        $results = $this->performSearch($builder)
-            ->forPage($page, $perPage)
-            ->get();
-
-        $total = $this->performSearch($builder)->count();
-
-        return ['results' => $results, 'total' => $total];
-    }
-
-    /**
-     * Map the given results to instances of the given model.
-     *
-     * @param  \Laravel\Scout\Builder  $builder
-     * @param  mixed  $results
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @return \Illuminate\Database\Eloquent\Collection
-     */
-    public function map(Builder $builder, $results, $model)
-    {
-        if ($results['total'] === 0) {
-            return Collection::make();
-        }
-
-        $keys = $this->mapIds($results);
-
-        $models = $model->whereIn(
-            $model->getQualifiedKeyName(), $keys
-        )->get()->keyBy($model->getKeyName());
-
-        return Collection::make($results['results'])
-            ->map(function ($record) use ($model, $models) {
-                $key = $record->objectID;
-
-                if (isset($models[$key])) {
-                    return $models[$key];
-                }
-            })->filter();
-    }
-
-    /**
-     * Get the total count from a raw result returned by the engine.
-     *
-     * @param  mixed  $results
-     * @return int
-     */
-    public function getTotalCount($results)
-    {
-        return $results['total'];
-    }
-
-    /**
-     * Pluck and return the primary keys of the given results.
-     *
-     * @param  mixed  $results
-     * @return \Illuminate\Support\Collection
-     */
-    public function mapIds($results)
-    {
-        return $results['results']->pluck('objectID')->values();
     }
 }
