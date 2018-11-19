@@ -20,6 +20,7 @@ final class DatabaseEngineTest extends AbstractTestCase
         $queryBuilder = Mockery::mock('Illuminate\Database\Query\Builder');
         $modelReturningEmpty = Mockery::mock('Testing\Fixtures\TestModel');
         $modelReturningEmpty->shouldReceive('toSearchableArray')->andReturn([]);
+        $modelReturningEmpty->shouldReceive('scoutMetadata')->andReturn([]);
         $manager->shouldReceive('table')->with('scout_index')->andReturn($queryBuilder);
         $queryBuilder->shouldReceive('updateOrInsert')->with([
             'index'    => 'table',
@@ -27,7 +28,7 @@ final class DatabaseEngineTest extends AbstractTestCase
         ], [
             'objectID' => 1,
             'index'    => 'table',
-            'entry'    => '[1]',
+            'entry'    => '{"id":1}',
         ]);
 
         $engine = new DatabaseEngine($manager);
@@ -103,7 +104,10 @@ final class DatabaseEngineTest extends AbstractTestCase
             )
             ->andReturn($queryBuilder)
             ->shouldReceive('where')
-            ->with('entry', 'like', '%"foo":"1"%')
+            ->with('entry', 'like', '%"foo":1%')
+            ->andReturn($queryBuilder)
+            ->shouldReceive('where')
+            ->with('entry', 'like', '%"bar":"string"%')
             ->andReturn($queryBuilder)
             ->shouldReceive('get')
             ->andReturn([1, 2, 3]);
@@ -111,6 +115,7 @@ final class DatabaseEngineTest extends AbstractTestCase
         $engine = new DatabaseEngine($manager);
         $builder = new Builder(new TestModel(), 'zonda');
         $builder->where('foo', 1);
+        $builder->where('bar', 'string');
         $result = $engine->search($builder);
         $this->assertSame($result, [
             'results' => [1, 2, 3],

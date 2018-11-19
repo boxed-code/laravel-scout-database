@@ -3,6 +3,7 @@
 namespace BoxedCode\Laravel\Scout;
 
 use Illuminate\Database\DatabaseManager;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
@@ -33,9 +34,15 @@ class DatabaseEngine extends Engine
      */
     public function update($models)
     {
+        if ($this->usesSoftDelete($models->first()) && config('scout.soft_delete', false)) {
+            $models->each->pushSoftDeleteMetadata();
+        }
+
         $models
             ->map(function ($model) {
-                $array = array_values($model->toSearchableArray());
+                $array = array_merge(
+                    $model->toSearchableArray(), $model->scoutMetadata()
+                );
 
                 if (empty($array)) {
                     return;
@@ -155,6 +162,21 @@ class DatabaseEngine extends Engine
     }
 
     /**
+     * Flush all of the model's records from the engine.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return void
+     */
+    public function flush($model)
+    {
+        $index = $model->searchableAs();
+
+        $this->query()
+            ->where('index', $index)
+            ->delete();
+    }
+
+    /**
      * Pluck and return the primary keys of the given results.
      *
      * @param mixed $results
@@ -203,11 +225,22 @@ class DatabaseEngine extends Engine
             ->where('entry', 'like', '%' . $builder->query . '%');
 
         foreach ($builder->wheres as $column => $value) {
-            $search = sprintf('%%"%s":"%s"%%', $column, $value);
+            $search = preg_replace('/^\{|\}$/', '%', json_encode([$column => $value]));
 
             $query->where('entry', 'like', $search);
         }
 
         return $query;
+    }
+
+    /**
+     * Determine if the given model uses soft deletes.
+     *
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return bool
+     */
+    protected function usesSoftDelete($model)
+    {
+        return in_array(SoftDeletes::class, class_uses_recursive($model));
     }
 }
