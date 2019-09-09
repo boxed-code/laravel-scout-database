@@ -134,10 +134,16 @@ class DatabaseEngine extends Engine
 
         $keys = $this->mapIds($results);
 
-        $models = $model->whereIn(
+        $query = $model->whereIn(
             $model->getQualifiedKeyName(),
             $keys
-        )->get()->keyBy($model->getKeyName());
+        );
+
+        if ($this->usesSoftDelete($model)) {
+            $query = $query->withTrashed();
+        }
+
+        $models = $query->get()->keyBy($model->getKeyName());
 
         return Collection::make($results['results'])
             ->map(function ($record) use ($model, $models) {
