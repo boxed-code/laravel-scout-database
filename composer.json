@@ -10,12 +10,12 @@
         }
     ],
     "require": {
-        "php": ">=7.0",
-        "laravel/scout": "^7.0"
+        "php": ">=7.2",
+        "laravel/scout": "^8.0"
     },
      "require-dev": {
         "mockery/mockery": "~1.0",
-        "phpunit/phpunit": "~6.0"
+        "phpunit/phpunit": "~7.5"
     },
     "autoload": {
         "psr-4": {
