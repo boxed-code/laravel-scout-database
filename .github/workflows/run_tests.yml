@@ -1,0 +1,46 @@
+name: Tests
+
+on: ['push', 'pull_request']
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: [7.2, 7.3, 7.4, 8.0]
+        scout: ["8.*", ">=8.5"]
+        dependency-version: [prefer-stable, prefer-lowest]
+        include:
+          - scout: "8.*"
+            php: [7.2, 7.3, 7.4]
+          - scout: ">=8.5"
+            php: 8.0
+
+    name: PHP ${{ matrix.php }}  - Scout ${{ matrix.scout }} (${{ matrix.dependency-version }})
+
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Cache dependencies
+      uses: actions/cache@v1
+      with:
+        path: ~/.composer/cache/files
+        key: dependencies-php-${{ matrix.php }}-composer-${{ matrix.scout }}-${{ matrix.dependency-version }}
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        extensions: mbstring, zip
+        coverage: pcov
+
+    - name: Install Composer dependencies
+      run: |
+        composer require "laravel/scout:${{ matrix.scout }}" --no-interaction --no-update
+        composer update --${{ matrix.dependency-version }} --no-interaction --prefer-dist --no-suggest
+
+    - name: PHPUnit Testing
+      run: vendor/bin/phpunit
