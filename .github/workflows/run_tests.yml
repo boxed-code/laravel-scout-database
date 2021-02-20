@@ -13,7 +13,11 @@ jobs:
         dependency-version: [prefer-stable, prefer-lowest]
         include:
           - scout: "8.*"
-            php: [7.2, 7.3, 7.4]
+            php: 7.2
+          - scout: "8.*"
+            php: 7.3
+          - scout: "8.*"
+            php: 7.4
           - scout: ">=8.5"
             php: 8.0
 
