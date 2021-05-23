@@ -166,23 +166,21 @@ class DatabaseEngine extends Engine
      */
     public function lazyMap(Builder $builder, $results, $model)
     {
-        return LazyCollection::make(function() use ($results, $model) {
-            $chunks = collect($this->mapIds($results))->chunk(1000);
+        if (intval($results['total']) === 0) {
+            return LazyCollection::make($model->newCollection());
+        }
 
-            foreach ($chunks as $chunk) {
-                foreach ($chunk as $item) {
-                    $query = $model->query();
+        $objectIds = $this->mapIds($results);
 
-                    if ($this->usesSoftDelete($model)) {
-                        $query = $query->withTrashed();
-                    }
+        $objectIdPositions = $objectIds->flip();
 
-                    if ($result = $query->find($item)) {
-                        yield $result;
-                    }
-                };
-            };
-        });
+        return $model->queryScoutModelsByIds(
+                $builder, $objectIds
+            )->cursor()->filter(function ($model) use ($objectIds) {
+                return in_array($model->getScoutKey(), $objectIds);
+            })->sortBy(function ($model) use ($objectIdPositions) {
+                return $objectIdPositions[$model->getScoutKey()];
+            })->values();
     }
 
     /**

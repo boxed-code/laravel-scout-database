@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Laravel\Scout\Builder;
 use Mockery;
 use Tests\Fixtures\TestModel;
+use Illuminate\Support\LazyCollection;
 
 /**
  * @internal
@@ -170,12 +171,14 @@ final class DatabaseEngineTest extends AbstractTestCase
         $manager = Mockery::mock('Illuminate\Database\DatabaseManager');
         $queryBuilder = Mockery::mock('\Illuminate\Database\Query\Builder');
         $manager->shouldReceive('table')->with('scout_index')->andReturn($queryBuilder);
+        $builder = Mockery::mock(Builder::class);
 
         $model = Mockery::mock('StdClass');
-        $model->shouldReceive('query')->andReturn($model);
-        $model->shouldReceive('find')->with(1)->andReturn($model);
-
-        $builder = Mockery::mock(Builder::class);
+        $model->shouldReceive('queryScoutModelsByIds')->andReturn($model);
+        $model->shouldReceive('cursor')->andReturn($model);
+        $model->shouldReceive('filter')->andReturn($model);
+        $model->shouldReceive('sortBy')->andReturn($model);
+        $model->shouldReceive('values')->andReturn([1]);
 
         $record = new \StdClass();
         $record->objectID = 1;
@@ -185,7 +188,7 @@ final class DatabaseEngineTest extends AbstractTestCase
            $record,
         ]), 'total' => 1], $model);
 
-        $this->assertEquals(1, $results->count());
+        $this->assertCount(1, $results);
     }
 
     public function test_lazy_map_correctly_maps_empty()
@@ -193,17 +196,15 @@ final class DatabaseEngineTest extends AbstractTestCase
         $manager = Mockery::mock('Illuminate\Database\DatabaseManager');
         $queryBuilder = Mockery::mock('\Illuminate\Database\Query\Builder');
         $manager->shouldReceive('table')->with('scout_index')->andReturn($queryBuilder);
+        $builder = Mockery::mock(Builder::class);
 
         $model = Mockery::mock('StdClass');
-        $model->shouldReceive('query')->andReturn($model);
-        $model->shouldReceive('find')->with(1)->andReturn($model);
-
-        $builder = Mockery::mock(Builder::class);
+        $model->shouldReceive('newCollection')->andReturn(collect([]));
 
         $engine = new DatabaseEngine($manager);
         $results = $engine->lazyMap($builder, ['results' => collect([]), 'total' => 0], $model);
 
-        $this->assertEquals(0, $results->count());
+        $this->assertCount(0, $results);
     }
 
     public function test_paginate_returns_correctly()
