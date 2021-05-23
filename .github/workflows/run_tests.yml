@@ -12,12 +12,30 @@ jobs:
         scout: ["8.*", "9.*"]
         dependency-version: [prefer-stable, prefer-lowest]
         include:
-          - scout: ">=8.5"
+          - scout: "^9.0"
             php: 8.0
-            dependency-version: prefer-stable
-          - scout: ">=8.5"
+            dependency-version: "prefer-lowest"
+          - scout: "^8.5"
             php: 8.0
-            dependency-version: prefer-lowest
+            dependency-version: "prefer-lowest"
+          - scout: "^8.0"
+            php: 7.2
+            dependency-version: "prefer-lowest"
+          - scout: "^8.0"
+            php: 7.3
+            dependency-version: "prefer-lowest"
+          - scout: "^9.0"
+            php: 8.0
+            dependency-version: "prefer-stable"
+          - scout: "^8.5"
+            php: 8.0
+            dependency-version: "prefer-stable"
+          - scout: "^8.0"
+            php: 7.2
+            dependency-version: "prefer-stable"
+          - scout: "^8.0"
+            php: 7.3
+            dependency-version: "prefer-stable"
 
     name: PHP ${{ matrix.php }}  - Scout ${{ matrix.scout }} (${{ matrix.dependency-version }})
 
