@@ -9,7 +9,7 @@ Searchable model attributes are JSON encoded an placed in a text column for simp
 
 This driver is zero configuration, requiring you to only add the service provider & run the migration.
 
-*Requires Scout 8.x and PHP >=7.2 or >=8.0*
+*Requires Scout 8.x or 9.x and PHP >=7.2 or >=8.0*
 
 ## Installation
 
