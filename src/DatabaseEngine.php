@@ -5,6 +5,7 @@ namespace BoxedCode\Laravel\Scout;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Laravel\Scout\Builder;
 use Laravel\Scout\Engines\Engine;
 
@@ -153,6 +154,58 @@ class DatabaseEngine extends Engine
                     return $models[$key];
                 }
             })->filter();
+    }
+
+    /**
+     * Map the given results to instances of the given model via a lazy collection.
+     *
+     * @param  \Laravel\Scout\Builder  $builder
+     * @param  mixed  $results
+     * @param  \Illuminate\Database\Eloquent\Model  $model
+     * @return \Illuminate\Support\LazyCollection
+     */
+    public function lazyMap(Builder $builder, $results, $model)
+    {
+        return LazyCollection::make(function() use ($results, $model) {
+            $chunks = collect($this->mapIds($results))->chunk(1000);
+
+            foreach ($chunks as $chunk) {
+                foreach ($chunk as $item) {
+                    $query = $model->query();
+
+                    if ($this->usesSoftDelete($model)) {
+                        $query = $query->withTrashed();
+                    }
+
+                    if ($result = $query->find($item)) {
+                        yield $result;
+                    }
+                };
+            };
+        });
+    }
+
+    /**
+     * Create a search index.
+     *
+     * @param  string  $name
+     * @param  array  $options
+     * @return mixed
+     */
+    public function createIndex($name, array $options = [])
+    {
+        throw new Exception('Database indexes are created automatically upon adding objects.');
+    }
+
+    /**
+     * Delete a search index.
+     *
+     * @param  string  $name
+     * @return mixed
+     */
+    public function deleteIndex($name)
+    {
+        $this->query()->where('index', $name)->delete();
     }
 
     /**

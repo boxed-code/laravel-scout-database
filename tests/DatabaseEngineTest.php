@@ -165,6 +165,47 @@ final class DatabaseEngineTest extends AbstractTestCase
         $this->assertCount(0, $results);
     }
 
+    public function test_lazy_map_correctly_maps_results_to_models()
+    {
+        $manager = Mockery::mock('Illuminate\Database\DatabaseManager');
+        $queryBuilder = Mockery::mock('\Illuminate\Database\Query\Builder');
+        $manager->shouldReceive('table')->with('scout_index')->andReturn($queryBuilder);
+
+        $model = Mockery::mock('StdClass');
+        $model->shouldReceive('query')->andReturn($model);
+        $model->shouldReceive('find')->with(1)->andReturn($model);
+
+        $builder = Mockery::mock(Builder::class);
+
+        $record = new \StdClass();
+        $record->objectID = 1;
+
+        $engine = new DatabaseEngine($manager);
+        $results = $engine->lazyMap($builder, ['results' => collect([
+           $record,
+        ]), 'total' => 1], $model);
+
+        $this->assertEquals(1, $results->count());
+    }
+
+    public function test_lazy_map_correctly_maps_empty()
+    {
+        $manager = Mockery::mock('Illuminate\Database\DatabaseManager');
+        $queryBuilder = Mockery::mock('\Illuminate\Database\Query\Builder');
+        $manager->shouldReceive('table')->with('scout_index')->andReturn($queryBuilder);
+
+        $model = Mockery::mock('StdClass');
+        $model->shouldReceive('query')->andReturn($model);
+        $model->shouldReceive('find')->with(1)->andReturn($model);
+
+        $builder = Mockery::mock(Builder::class);
+
+        $engine = new DatabaseEngine($manager);
+        $results = $engine->lazyMap($builder, ['results' => collect([]), 'total' => 0], $model);
+
+        $this->assertEquals(0, $results->count());
+    }
+
     public function test_paginate_returns_correctly()
     {
         $queryBuilder = Mockery::mock('\Illuminate\Database\Query\Builder');
