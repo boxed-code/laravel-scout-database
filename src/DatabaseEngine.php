@@ -2,6 +2,7 @@
 
 namespace BoxedCode\Laravel\Scout;
 
+use Exception;
 use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
